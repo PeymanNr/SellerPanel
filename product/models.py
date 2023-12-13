@@ -4,8 +4,8 @@ from django.utils.translation import gettext as _
 
 class Price(models.Model):
     created_time = models.DateTimeField(auto_now_add=True,
-                                        verbose_name=_('created_at'))
-    price = models.DecimalField(max_digits=10, verbose_name=_('price'))
+                                        verbose_name=_('created_time'))
+    price = models.CharField(max_length=10, verbose_name=_('price'))
 
     class Meta:
         verbose_name = _('price')
