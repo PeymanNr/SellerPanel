@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 import requests
 from product.config_crawler import storage_neme, category_name, base_url
 from product.storge import FileStorage
-import re
 
 
 class CrawlerBase(ABC):
@@ -37,8 +36,9 @@ class LinkCrawler(CrawlerBase):
 
     def find_links(self, link):
         category_links = list()
+        crawl = True
         page = 1
-        while True:
+        while crawl:
             url = self.link.format(link, page)
             response = self.get_page(url)
 
@@ -49,10 +49,13 @@ class LinkCrawler(CrawlerBase):
                     print(f"No more data for page {page}")
                     break
 
-                self.store(data, 'links')
                 category_links.append(data)
                 print(f'Successfully crawled page {page}')
+                if page == 3:
+                    crawl = False
+
                 page += 1
+
             else:
                 print(f'Failed to crawl page {page}.'
                       f' Status code: {response.status_code}')
@@ -67,23 +70,15 @@ class LinkCrawler(CrawlerBase):
             list_href.extend(links)
             print(f'put link to queue')
         if store:
-            extracted_urls = self.extract_urls(list_href)
-            self.store(extracted_urls)
+
+            for item in list_href:
+                products_list = item.get("products", [])
+
+                self.store(
+                    [{"url": "digikala.com" + li.get("url", {}).get("uri"),
+                      'flag': False} for li in products_list])
 
         return list_href
 
-    def extract_urls(self, data):
-        pattern = r'"/product/([^"]*)"'
-        matches = []
-
-        for li in data:
-            url = li.get("url", {}).get("uri", '')
-            match = re.search(pattern, url)
-            if match:
-                matches.append({"url": match.group(1), 'flag': False})
-
-        return matches
-
     def store(self, data, *args):
         self.storage_set.store(data, 'adv_links')
-
